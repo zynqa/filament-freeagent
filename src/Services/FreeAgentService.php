@@ -25,7 +25,8 @@ class FreeAgentService
     public function __construct(
         private readonly FreeAgentOAuthService $oauthService
     ) {
-        $this->apiUrl = config('filament-freeagent.api_url');
+        $apiUrl = config('filament-freeagent.api_url');
+        $this->apiUrl = is_callable($apiUrl) ? $apiUrl() : $apiUrl;
         $this->invoicesCacheTtl = config('filament-freeagent.cache.invoices_ttl', 1800);
         $this->contactsCacheTtl = config('filament-freeagent.cache.contacts_ttl', 3600);
     }
