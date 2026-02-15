@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+use Spatie\LaravelSettings\Migrations\SettingsMigration;
+
+return new class extends SettingsMigration
+{
+    public function up(): void
+    {
+        $this->migrator->add('freeagent.client_id', null);
+        $this->migrator->add('freeagent.client_secret', null);
+    }
+
+    public function down(): void
+    {
+        $this->migrator->delete('freeagent.client_id');
+        $this->migrator->delete('freeagent.client_secret');
+    }
+};

@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('freeagent_invoices', function (Blueprint $table) {
+            $table->foreignId('project_id')->nullable()->after('contact_id')->constrained('freeagent_projects')->onDelete('set null');
+            $table->string('project_freeagent_id')->nullable()->after('contact_freeagent_id'); // Denormalized for performance
+
+            $table->index('project_id');
+            $table->index('project_freeagent_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('freeagent_invoices', function (Blueprint $table) {
+            $table->dropForeign(['project_id']);
+            $table->dropIndex(['project_id']);
+            $table->dropIndex(['project_freeagent_id']);
+            $table->dropColumn(['project_id', 'project_freeagent_id']);
+        });
+    }
+};

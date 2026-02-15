@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('freeagent_invoices', function (Blueprint $table) {
+            $table->id();
+            $table->string('freeagent_id')->unique();
+            $table->foreignId('contact_id')->nullable()->constrained('freeagent_contacts')->onDelete('set null');
+            $table->string('contact_freeagent_id'); // Denormalized for performance
+            $table->string('reference')->nullable();
+            $table->string('status'); // 'draft', 'sent', 'paid', etc.
+            $table->date('dated_on');
+            $table->date('due_on')->nullable();
+            $table->decimal('net_value', 15, 2);
+            $table->decimal('sales_tax_value', 15, 2);
+            $table->decimal('total_value', 15, 2);
+            $table->string('currency', 3);
+            $table->string('pdf_url')->nullable();
+            $table->json('raw_data')->nullable();
+            $table->timestamps();
+            $table->timestamp('synced_at')->nullable();
+
+            $table->index('freeagent_id');
+            $table->index('contact_id');
+            $table->index('contact_freeagent_id');
+            $table->index('status');
+            $table->index('dated_on');
+            $table->index('synced_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('freeagent_invoices');
+    }
+};
