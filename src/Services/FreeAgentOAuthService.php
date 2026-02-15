@@ -21,9 +21,19 @@ class FreeAgentOAuthService
 
     public function __construct()
     {
-        $this->authorizeUrl = config('filament-freeagent.authorize_url');
-        $this->tokenUrl = config('filament-freeagent.token_url');
-        $this->redirectUri = config('filament-freeagent.redirect_uri');
+        $this->authorizeUrl = $this->resolveConfigValue('filament-freeagent.authorize_url');
+        $this->tokenUrl = $this->resolveConfigValue('filament-freeagent.token_url');
+        $this->redirectUri = $this->resolveConfigValue('filament-freeagent.redirect_uri');
+    }
+
+    /**
+     * Resolve a config value that may be a closure
+     */
+    private function resolveConfigValue(string $key): string
+    {
+        $value = config($key);
+
+        return is_callable($value) ? $value() : $value;
     }
 
     /**
@@ -134,9 +144,10 @@ class FreeAgentOAuthService
      *
      * @throws FreeAgentOAuthException
      */
-    public function getValidAccessToken($user): ?FreeAgentOAuthToken
+    public function getValidAccessToken($user = null): ?FreeAgentOAuthToken
     {
-        $token = FreeAgentOAuthToken::forUser($user->id)
+        // Use system-wide connection (user_id = 1) instead of per-user tokens
+        $token = FreeAgentOAuthToken::forUser(1)
             ->latest()
             ->first();
 
@@ -154,7 +165,7 @@ class FreeAgentOAuthService
             return $this->refreshAccessToken($token);
         } catch (FreeAgentOAuthException $e) {
             Log::warning('Failed to refresh FreeAgent token', [
-                'user_id' => $user->id,
+                'system_token' => true,
                 'error' => $e->getMessage(),
             ]);
 
@@ -221,18 +232,18 @@ class FreeAgentOAuthService
     }
 
     /**
-     * Store OAuth tokens for a user
+     * Store OAuth tokens for system-wide use
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  (optional, for compatibility)
      * @param  int  $expiresIn  Seconds until expiration
      */
     private function storeTokens($user, string $accessToken, string $refreshToken, int $expiresIn): FreeAgentOAuthToken
     {
-        // Delete any existing tokens for this user
-        FreeAgentOAuthToken::where('user_id', $user->id)->delete();
+        // Delete any existing system tokens (user_id = 1 for app-wide connection)
+        FreeAgentOAuthToken::where('user_id', 1)->delete();
 
         return FreeAgentOAuthToken::create([
-            'user_id' => $user->id,
+            'user_id' => 1, // System-wide connection
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'expires_at' => Carbon::now()->addSeconds($expiresIn),
@@ -240,16 +251,16 @@ class FreeAgentOAuthService
     }
 
     /**
-     * Revoke and delete a user's OAuth token
+     * Revoke and delete the system-wide OAuth token
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  (optional, for compatibility)
      */
-    public function revokeToken($user): void
+    public function revokeToken($user = null): void
     {
-        FreeAgentOAuthToken::where('user_id', $user->id)->delete();
+        FreeAgentOAuthToken::where('user_id', 1)->delete();
 
         Log::info('FreeAgent OAuth token revoked', [
-            'user_id' => $user->id,
+            'system_token' => true,
         ]);
     }
 }

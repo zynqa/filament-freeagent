@@ -40,17 +40,10 @@ class ListFreeAgentInvoices extends ListRecords
                 ->modalDescription('This will fetch the latest invoice data from FreeAgent. This may take a few moments.')
                 ->modalSubmitActionLabel('Sync Now'),
 
-            Actions\Action::make('connect')
-                ->label('Connect FreeAgent')
-                ->icon('heroicon-o-link')
-                ->color('success')
-                ->url(fn (): string => route('freeagent.connect'))
-                ->visible(fn (): bool => ! auth()->user()?->hasFreeAgentConnection() ?? true),
-
             Actions\Action::make('settings')
                 ->label('FreeAgent Settings')
                 ->icon('heroicon-o-cog-6-tooth')
-                ->url(fn (): string => route('filament.app.pages.manage-general-settings'))
+                ->url(fn (): string => route('filament.app.pages.manage-general-settings').'?tab=-integrations-tab')
                 ->visible(fn (): bool => auth()->user()?->hasRole('super_admin') ?? false)
                 ->color('gray'),
         ];
