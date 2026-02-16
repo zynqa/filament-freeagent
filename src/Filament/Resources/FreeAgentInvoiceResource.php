@@ -19,7 +19,7 @@ class FreeAgentInvoiceResource extends Resource
 {
     protected static ?string $model = FreeAgentInvoice::class;
 
-    protected static ?string $slug = 'freeagent-invoices';
+    protected static ?string $slug = 'invoices';
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
