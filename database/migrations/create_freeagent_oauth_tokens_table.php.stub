@@ -12,7 +12,9 @@ return new class extends Migration
     {
         Schema::create('freeagent_oauth_tokens', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            // Nullable: the app-wide ("system") FreeAgent connection is stored
+            // with a null user_id rather than being tied to a specific user.
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->text('access_token');
             $table->text('refresh_token');
             $table->timestamp('expires_at');

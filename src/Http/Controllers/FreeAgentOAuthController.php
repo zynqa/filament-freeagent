@@ -25,12 +25,28 @@ class FreeAgentOAuthController extends Controller
     ) {}
 
     /**
+     * Resolve the configured login route name for the host panel.
+     */
+    private function loginRoute(): string
+    {
+        return config('filament-freeagent.routes.login', 'filament.app.auth.login');
+    }
+
+    /**
+     * Resolve the configured dashboard route name for the host panel.
+     */
+    private function dashboardRoute(): string
+    {
+        return config('filament-freeagent.routes.dashboard', 'filament.app.pages.dashboard');
+    }
+
+    /**
      * Redirect to FreeAgent for authorization
      */
     public function redirect(Request $request): RedirectResponse
     {
         if (! auth()->check()) {
-            return redirect()->route('filament.app.auth.login')
+            return redirect()->route($this->loginRoute())
                 ->with('error', 'You must be logged in to connect to FreeAgent');
         }
 
@@ -65,7 +81,7 @@ class FreeAgentOAuthController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         if (! auth()->check()) {
-            return redirect()->route('filament.app.auth.login')
+            return redirect()->route($this->loginRoute())
                 ->with('error', 'Authentication required');
         }
 
@@ -84,7 +100,7 @@ class FreeAgentOAuthController extends Controller
                 ->danger()
                 ->send();
 
-            return redirect()->route('filament.app.pages.dashboard');
+            return redirect()->route($this->dashboardRoute());
         }
 
         // Clear the state
@@ -107,7 +123,7 @@ class FreeAgentOAuthController extends Controller
                 ->danger()
                 ->send();
 
-            return redirect()->route('filament.app.pages.dashboard');
+            return redirect()->route($this->dashboardRoute());
         }
 
         // Get authorization code
@@ -120,7 +136,7 @@ class FreeAgentOAuthController extends Controller
                 ->danger()
                 ->send();
 
-            return redirect()->route('filament.app.pages.dashboard');
+            return redirect()->route($this->dashboardRoute());
         }
 
         try {
@@ -137,7 +153,7 @@ class FreeAgentOAuthController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            return redirect()->route('filament.app.pages.dashboard');
+            return redirect()->route($this->dashboardRoute());
 
         } catch (FreeAgentOAuthException $e) {
             Log::error('FreeAgent OAuth callback failed', [
@@ -151,7 +167,7 @@ class FreeAgentOAuthController extends Controller
                 ->danger()
                 ->send();
 
-            return redirect()->route('filament.app.pages.dashboard');
+            return redirect()->route($this->dashboardRoute());
         }
     }
 
@@ -161,7 +177,7 @@ class FreeAgentOAuthController extends Controller
     public function disconnect(Request $request): RedirectResponse
     {
         if (! auth()->check()) {
-            return redirect()->route('filament.app.auth.login');
+            return redirect()->route($this->loginRoute());
         }
 
         try {

@@ -8,10 +8,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Zynqa\FilamentFreeAgent\Models\FreeAgentContact;
 use Zynqa\FilamentFreeAgent\Models\FreeAgentOAuthToken;
 
+/**
+ * Links a host model to a FreeAgent contact.
+ *
+ * Apply this trait to whichever model represents the billable entity in the
+ * host application. It only requires a nullable `freeagent_contact_id` column
+ * on the model's table — it is NOT specific to the User model (e.g. a property
+ * management app may apply it to a Property/Household model).
+ */
 trait HasFreeAgentContact
 {
     /**
-     * Get the FreeAgent contact associated with this user
+     * The FreeAgent contact linked to this record.
      */
     public function freeAgentContact(): HasOne
     {
@@ -19,15 +27,7 @@ trait HasFreeAgentContact
     }
 
     /**
-     * Get the FreeAgent OAuth token for this user
-     */
-    public function freeAgentOAuthToken(): HasOne
-    {
-        return $this->hasOne(FreeAgentOAuthToken::class, 'user_id');
-    }
-
-    /**
-     * Check if user has a FreeAgent contact assigned
+     * Whether this record has a FreeAgent contact linked.
      */
     public function hasFreeAgentContact(): bool
     {
@@ -35,18 +35,21 @@ trait HasFreeAgentContact
     }
 
     /**
-     * Check if user has a valid FreeAgent OAuth token
+     * Whether an app-wide FreeAgent connection (system OAuth token) exists.
+     *
+     * The OAuth connection is system-wide (a single token for the whole app),
+     * not per-record, so this does not depend on the model it is called on.
      */
     public function hasFreeAgentConnection(): bool
     {
-        return $this->freeAgentOAuthToken()
+        return FreeAgentOAuthToken::system()
             ->valid()
             ->exists();
     }
 
     /**
-     * Get the FreeAgent contact ID for this user
-     * Returns the FreeAgent API URL (e.g., https://api.freeagent.com/v2/contacts/123)
+     * The linked FreeAgent contact ID, as the FreeAgent API URL
+     * (e.g. https://api.freeagent.com/v2/contacts/123), or null if unlinked.
      */
     public function getFreeAgentContactId(): ?string
     {

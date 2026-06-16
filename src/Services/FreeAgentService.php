@@ -284,6 +284,95 @@ class FreeAgentService
     }
 
     /**
+     * Create an invoice in FreeAgent.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  array  $invoice  Invoice payload (the inner "invoice" object), e.g.
+     *                          ['contact' => '<contact url>', 'dated_on' => '2026-06-14',
+     *                           'payment_terms_in_days' => 30, 'reference' => 'INV-2026-0001',
+     *                           'currency' => 'GBP', 'invoice_items' => [...]]
+     * @return array The created invoice data
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function createInvoice($user, array $invoice): array
+    {
+        $response = $this->sendRequest('POST', 'invoices', $user, ['invoice' => $invoice]);
+
+        $this->clearUserCache($user->id);
+
+        return $response['invoice'] ?? [];
+    }
+
+    /**
+     * Update an existing (draft) invoice in FreeAgent.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  string  $invoiceId  FreeAgent invoice ID (numeric or full URL)
+     * @param  array  $invoice  Invoice fields to update (the inner "invoice" object)
+     * @return array The updated invoice data
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function updateInvoice($user, string $invoiceId, array $invoice): array
+    {
+        $id = $this->extractIdFromUrl($invoiceId);
+
+        $response = $this->sendRequest('PUT', "invoices/{$id}", $user, ['invoice' => $invoice]);
+
+        $this->clearUserCache($user->id);
+
+        return $response['invoice'] ?? [];
+    }
+
+    /**
+     * Transition an invoice to "Sent" without emailing the contact.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  string  $invoiceId  FreeAgent invoice ID (numeric or full URL)
+     * @return array The updated invoice data
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function markInvoiceAsSent($user, string $invoiceId): array
+    {
+        $id = $this->extractIdFromUrl($invoiceId);
+
+        $response = $this->sendRequest('PUT', "invoices/{$id}/transitions/mark_as_sent", $user);
+
+        $this->clearUserCache($user->id);
+
+        return $response['invoice'] ?? [];
+    }
+
+    /**
+     * Email an invoice to its contact via FreeAgent. This transitions the
+     * invoice to "Sent" and lets FreeAgent deliver the email. Pass an empty
+     * $email array to use FreeAgent's default template and the contact's email.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  string  $invoiceId  FreeAgent invoice ID (numeric or full URL)
+     * @param  array  $email  Optional overrides: ['to' => ..., 'subject' => ..., 'body' => ...]
+     * @return array The updated invoice data
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function sendInvoiceEmail($user, string $invoiceId, array $email = []): array
+    {
+        $id = $this->extractIdFromUrl($invoiceId);
+
+        // FreeAgent expects the email payload nested under "invoice" => "email".
+        // With use_email defaulting, an empty email object sends the default template.
+        $payload = ['invoice' => ['email' => empty($email) ? (object) [] : $email]];
+
+        $response = $this->sendRequest('POST', "invoices/{$id}/send_email", $user, $payload);
+
+        $this->clearUserCache($user->id);
+
+        return $response['invoice'] ?? [];
+    }
+
+    /**
      * Send an HTTP request to FreeAgent API with comprehensive error handling
      *
      * @param  string  $method  HTTP method (GET, POST, etc.)
@@ -502,13 +591,26 @@ class FreeAgentService
     }
 
     /**
-     * Build cache key for a request
+     * Build cache key for a request.
+     *
+     * Keys embed a per-user cache version so the whole set can be invalidated
+     * by bumping the version (see clearUserCache) without flushing the host
+     * application's cache or relying on a tag-aware cache store.
      */
     private function buildCacheKey(string $type, int $userId, array $params = []): string
     {
         $paramsHash = md5(json_encode($params));
+        $version = $this->cacheVersion($userId);
 
-        return "freeagent_{$type}_user_{$userId}_{$paramsHash}";
+        return "freeagent_v{$version}_{$type}_user_{$userId}_{$paramsHash}";
+    }
+
+    /**
+     * Current cache version for a user (defaults to 1).
+     */
+    private function cacheVersion(int $userId): int
+    {
+        return (int) Cache::get("freeagent_cache_version_user_{$userId}", 1);
     }
 
     /**
@@ -527,13 +629,18 @@ class FreeAgentService
     }
 
     /**
-     * Clear all caches for a user
+     * Invalidate all FreeAgent caches for a user.
+     *
+     * Bumps the user's cache version so every previously-built key becomes
+     * unreachable. This is store-agnostic and, crucially, does NOT flush the
+     * host application's cache (the previous implementation called
+     * Cache::flush(), wiping unrelated cache entries).
      */
     public function clearUserCache(int $userId): void
     {
-        // This is a simple implementation - in production you might use cache tags
-        // or maintain a list of cache keys per user
-        Cache::flush(); // For simplicity, clear all cache
+        $versionKey = "freeagent_cache_version_user_{$userId}";
+
+        Cache::put($versionKey, $this->cacheVersion($userId) + 1);
 
         Log::info('FreeAgent cache cleared', [
             'user_id' => $userId,

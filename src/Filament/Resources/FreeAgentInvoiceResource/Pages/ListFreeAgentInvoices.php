@@ -149,7 +149,7 @@ class ListFreeAgentInvoices extends ListRecords
                     ->title('Connection Required')
                     ->body('Please connect your FreeAgent account to sync invoices')
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('connect')
+                        \Filament\Actions\Action::make('connect')
                             ->button()
                             ->url(route('freeagent.connect')),
                     ])

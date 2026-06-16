@@ -34,16 +34,28 @@ return [
     |--------------------------------------------------------------------------
     | OAuth Credentials
     |--------------------------------------------------------------------------
-    | Can be set via Settings or environment variables
-    | Settings take precedence over environment
+    | Resolved from environment by default. The host application may override
+    | these at runtime from its own settings store (see the service provider's
+    | loadSettingsIntoConfig()), which takes precedence over these env values.
     */
-    'client_id' => fn () => app(\Zynqa\FilamentFreeAgent\Settings\FreeAgentSettings::class)->client_id
-        ?? env('FREEAGENT_CLIENT_ID'),
+    'client_id' => env('FREEAGENT_CLIENT_ID'),
 
-    'client_secret' => fn () => app(\Zynqa\FilamentFreeAgent\Settings\FreeAgentSettings::class)->client_secret
-        ?? env('FREEAGENT_CLIENT_SECRET'),
+    'client_secret' => env('FREEAGENT_CLIENT_SECRET'),
 
     'redirect_uri' => env('FREEAGENT_REDIRECT_URI', env('APP_URL').'/freeagent/callback'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Panel Redirect Routes
+    |--------------------------------------------------------------------------
+    | The OAuth controller redirects here after connect/disconnect/error.
+    | Defaults assume a Filament panel with id "app"; override these for a
+    | panel registered under a different id (e.g. "auth" => filament.auth.*).
+    */
+    'routes' => [
+        'login' => env('FREEAGENT_LOGIN_ROUTE', 'filament.app.auth.login'),
+        'dashboard' => env('FREEAGENT_DASHBOARD_ROUTE', 'filament.app.pages.dashboard'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

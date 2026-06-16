@@ -72,4 +72,13 @@ class FreeAgentOAuthToken extends Model
     {
         return $query->where('user_id', $userId);
     }
+
+    /**
+     * Scope to the app-wide ("system") connection token, which is stored
+     * with a null user_id rather than tied to an individual user.
+     */
+    public function scopeSystem($query)
+    {
+        return $query->whereNull('user_id');
+    }
 }
