@@ -286,6 +286,16 @@ class FreeAgentInvoiceResource extends Resource
             return false;
         }
 
+        // Hide entirely unless the integration is active (enabled by the host
+        // and a live OAuth connection exists), so it doesn't sit alongside a
+        // host's own invoice screen when FreeAgent is off.
+        $enabled = config('filament-freeagent.enabled', true);
+        $connected = app(\Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService::class)->hasConnection();
+
+        if (! $enabled || ! $connected) {
+            return false;
+        }
+
         // Super admins can access
         if ($user->hasRole('super_admin')) {
             return true;

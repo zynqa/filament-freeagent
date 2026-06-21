@@ -68,6 +68,12 @@ class FilamentFreeAgentServiceProvider extends PackageServiceProvider
                 return property_exists($settings, $property) ? $settings->{$property} : null;
             };
 
+            // Host's master enable toggle (used to gate the package's UI).
+            $enabled = $get('freeagent_enabled');
+            if ($enabled !== null) {
+                config(['filament-freeagent.enabled' => (bool) $enabled]);
+            }
+
             if ($clientId = $get('freeagent_client_id')) {
                 config(['filament-freeagent.client_id' => $clientId]);
             }
