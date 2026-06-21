@@ -55,6 +55,7 @@ return [
     'routes' => [
         'login' => env('FREEAGENT_LOGIN_ROUTE', 'filament.app.auth.login'),
         'dashboard' => env('FREEAGENT_DASHBOARD_ROUTE', 'filament.app.pages.dashboard'),
+        'settings' => env('FREEAGENT_SETTINGS_ROUTE', 'filament.app.pages.manage-general-settings'),
     ],
 
     /*

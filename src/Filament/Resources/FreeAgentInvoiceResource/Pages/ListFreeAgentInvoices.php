@@ -8,6 +8,7 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Zynqa\FilamentFreeAgent\Exceptions\FreeAgentApiException;
 use Zynqa\FilamentFreeAgent\Exceptions\FreeAgentOAuthException;
 use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource;
@@ -43,10 +44,26 @@ class ListFreeAgentInvoices extends ListRecords
             Actions\Action::make('settings')
                 ->label('FreeAgent Settings')
                 ->icon('heroicon-o-cog-6-tooth')
-                ->url(fn (): string => route('filament.app.pages.manage-general-settings').'?tab=-integrations-tab')
-                ->visible(fn (): bool => auth()->user()?->hasRole('super_admin') ?? false)
+                ->url(fn (): ?string => static::settingsUrl())
+                ->visible(fn (): bool => (auth()->user()?->hasRole('super_admin') ?? false)
+                    && static::settingsUrl() !== null)
                 ->color('gray'),
         ];
+    }
+
+    /**
+     * Resolve the host application's settings page URL from config.
+     *
+     * Returns null when the configured route is not registered, so the action
+     * hides instead of throwing in apps that don't expose a settings page.
+     */
+    protected static function settingsUrl(): ?string
+    {
+        $route = config('filament-freeagent.routes.settings', 'filament.app.pages.manage-general-settings');
+
+        return Route::has($route)
+            ? route($route).'?tab=-integrations-tab'
+            : null;
     }
 
     /**
