@@ -5,6 +5,16 @@ declare(strict_types=1);
 return [
     /*
     |--------------------------------------------------------------------------
+    | Register the bundled Invoice resource
+    |--------------------------------------------------------------------------
+    | Set to false if the host app surfaces FreeAgent invoices through its own
+    | invoice screen and does not want this package's invoice resource (and its
+    | navigation entry) registered, avoiding a duplicate UI.
+    */
+    'register_invoice_resource' => env('FREEAGENT_REGISTER_INVOICE_RESOURCE', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | FreeAgent Environment
     |--------------------------------------------------------------------------
     | Options: 'production' or 'sandbox'

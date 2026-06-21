@@ -23,10 +23,15 @@ class FilamentFreeAgentPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        $panel
-            ->resources([
-                FreeAgentInvoiceResource::class,
-            ]);
+        // A host app that surfaces FreeAgent data through its own invoice screen
+        // can suppress this package's invoice resource to avoid a duplicate UI by
+        // setting filament-freeagent.register_invoice_resource to false.
+        if (config('filament-freeagent.register_invoice_resource', true)) {
+            $panel
+                ->resources([
+                    FreeAgentInvoiceResource::class,
+                ]);
+        }
         // Note: FreeAgentSettingsForm can be embedded in app's settings page
         // This approach keeps navigation clean and provides better integration
     }
