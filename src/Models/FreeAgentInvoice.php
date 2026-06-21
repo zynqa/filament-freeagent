@@ -207,9 +207,10 @@ class FreeAgentInvoice extends Model
                 'status' => $apiData['status'],
                 'dated_on' => $apiData['dated_on'],
                 'due_on' => $apiData['due_on'] ?? null,
-                'net_value' => $apiData['net_value'],
-                'sales_tax_value' => $apiData['sales_tax_value'],
-                'total_value' => $apiData['total_value'],
+                'net_value' => $apiData['net_value'] ?? 0,
+                // FreeAgent omits sales_tax_value for zero-rated / no-VAT invoices.
+                'sales_tax_value' => $apiData['sales_tax_value'] ?? 0,
+                'total_value' => $apiData['total_value'] ?? 0,
                 'currency' => $apiData['currency'],
                 'pdf_url' => $apiData['url'].'/pdf',
                 'raw_data' => $apiData,
