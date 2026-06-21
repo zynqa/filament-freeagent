@@ -28,15 +28,15 @@ class FreeAgentInvoiceResource extends Resource
 {
     protected static ?string $model = FreeAgentInvoice::class;
 
-    protected static ?string $slug = 'invoices';
+    protected static ?string $slug = 'freeagent-invoices';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static ?string $navigationLabel = 'Invoices';
+    protected static ?string $navigationLabel = 'FreeAgent Invoices';
 
-    protected static ?string $modelLabel = 'Invoice';
+    protected static ?string $modelLabel = 'FreeAgent Invoice';
 
-    protected static ?string $pluralModelLabel = 'Invoices';
+    protected static ?string $pluralModelLabel = 'FreeAgent Invoices';
 
     //    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
 
