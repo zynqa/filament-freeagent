@@ -211,6 +211,7 @@ class FreeAgentCacheService
                 'total' => count($apiInvoices),
                 'created' => 0,
                 'updated' => 0,
+                'deleted' => 0,
                 'errors' => 0,
             ];
 
@@ -231,6 +232,25 @@ class FreeAgentCacheService
                     ]);
                 }
             }
+
+            // Prune local invoices that were deleted in FreeAgent. getInvoices()
+            // fetches all pages, so any local row not in the result no longer
+            // exists. Scope the prune to the contact filter when one is applied
+            // so a contact-filtered sync never removes other contacts' invoices.
+            $apiIds = collect($apiInvoices)->pluck('url')->filter()->values()->all();
+
+            $pruneQuery = FreeAgentInvoice::query();
+
+            if (! empty($filters['contact'])) {
+                $pruneQuery->where('contact_freeagent_id', $filters['contact']);
+            }
+
+            if (! empty($apiIds)) {
+                $pruneQuery->whereNotIn('freeagent_id', $apiIds);
+            }
+
+            $stats['deleted'] = (clone $pruneQuery)->count();
+            $pruneQuery->delete();
 
             // Mark sync as completed
             $this->markInvoicesSynced($user->id);
