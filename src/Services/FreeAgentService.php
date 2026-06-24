@@ -346,6 +346,26 @@ class FreeAgentService
     }
 
     /**
+     * Delete an invoice in FreeAgent. Only draft invoices can be deleted;
+     * FreeAgent rejects deletion of sent/paid invoices. A 404 (already gone)
+     * surfaces as a FreeAgentApiException with statusCode 404 for the caller
+     * to treat as a no-op if desired.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  string  $invoiceId  FreeAgent invoice ID (numeric or full URL)
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function deleteInvoice($user, string $invoiceId): void
+    {
+        $id = $this->extractIdFromUrl($invoiceId);
+
+        $this->sendRequest('DELETE', "invoices/{$id}", $user);
+
+        $this->clearUserCache($user->id);
+    }
+
+    /**
      * Email an invoice to its contact via FreeAgent. This transitions the
      * invoice to "Sent" and lets FreeAgent deliver the email. Pass an empty
      * $email array to use FreeAgent's default template and the contact's email.
