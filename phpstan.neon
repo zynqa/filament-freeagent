@@ -1,0 +1,12 @@
+parameters:
+    level: 1
+
+    # CI analyses only the files a pull request changed, so baseline entries for
+    # untouched files would otherwise be reported as unmatched and fail the run.
+    reportUnmatchedIgnoredErrors: false
+
+    paths:
+        - src
+
+includes:
+    - phpstan-baseline.neon

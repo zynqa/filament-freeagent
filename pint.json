@@ -1,0 +1,23 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "declare_strict_types": true,
+        "single_line_empty_body": true
+    },
+    "concat_space": {
+        "spacing": "one"
+    },
+    "ordered_class_elements": {
+        "order": [
+            "use_trait",
+            "constant",
+            "property",
+            "construct",
+            "phpunit",
+            "public",
+            "protected",
+            "private"
+        ],
+        "sort_algorithm": "none"
+    }
+}
