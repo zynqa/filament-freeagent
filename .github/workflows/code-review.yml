@@ -1,0 +1,23 @@
+name: Code Review
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  review:
+    uses: zynqa/code-review-engine/.github/workflows/review.yml@main
+    with:
+      stack: "laravel"               # PHPCS Laravel standard + Pint; no Magento tooling installed
+      php-version: "8.2"             # Matches the package's own composer requirement
+      strict-mode: false
+      jira-project-key: "ZCP"        # This package is tracked on the portal's board
+
+      # Layer toggles
+      enable-pr-validation: true     # Enforce Jira-linked title, branch, description, and commits
+      enable-auto-approval: true     # Allow the workflow to approve once every enabled check passes
+      enable-module-registration: false # Magento-only check; must stay false on a Laravel package
+      enable-static-analysis: true   # PHPCS (Laravel standard), Pint, and PHPStan
+      enable-ai-review: false        # Enable once an AI provider key is configured for the org
+      enable-tests: false            # This package has no standalone suite; it is exercised from the portal
+    secrets: inherit
