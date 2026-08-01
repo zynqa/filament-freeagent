@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent\Services;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Zynqa\FilamentFreeAgent\Exceptions\FreeAgentApiException;
@@ -54,7 +55,7 @@ class FreeAgentCacheService
     /**
      * Sync contacts from FreeAgent API to local database
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User with OAuth token
+     * @param  Authenticatable  $user  User with OAuth token
      * @return array Sync statistics
      *
      * @throws FreeAgentApiException|FreeAgentOAuthException
@@ -118,7 +119,7 @@ class FreeAgentCacheService
     /**
      * Sync projects from FreeAgent API to local database
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User with OAuth token
+     * @param  Authenticatable  $user  User with OAuth token
      * @param  array  $filters  Optional filters to limit sync scope
      * @return array Sync statistics
      *
@@ -185,7 +186,7 @@ class FreeAgentCacheService
     /**
      * Sync invoices from FreeAgent API to local database
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User with OAuth token
+     * @param  Authenticatable  $user  User with OAuth token
      * @param  array  $filters  Optional filters to limit sync scope
      * @return array Sync statistics
      *
@@ -258,7 +259,7 @@ class FreeAgentCacheService
     /**
      * Sync a single invoice by ID
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  Authenticatable  $user
      *
      * @throws FreeAgentApiException|FreeAgentOAuthException
      */

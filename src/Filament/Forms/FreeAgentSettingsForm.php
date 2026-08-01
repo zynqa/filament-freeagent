@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent\Filament\Forms;
 
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService;
+use Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService;
 
 /**
  * Provides FreeAgent settings form components that can be embedded
@@ -122,10 +124,10 @@ class FreeAgentSettingsForm
                             ->action(function () {
                                 $user = auth()->user();
                                 if ($user) {
-                                    app(\Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService::class)
+                                    app(FreeAgentOAuthService::class)
                                         ->revokeToken($user);
 
-                                    \Filament\Notifications\Notification::make()
+                                    Notification::make()
                                         ->title('Disconnected')
                                         ->body('Your FreeAgent account has been disconnected')
                                         ->success()
@@ -205,7 +207,7 @@ class FreeAgentSettingsForm
         $cacheService = app(FreeAgentCacheService::class);
         $cacheService->clearUserCache($user->id);
 
-        \Filament\Notifications\Notification::make()
+        Notification::make()
             ->title('Cache Cleared Successfully')
             ->body('Your FreeAgent cache has been cleared. Fresh data will be loaded on your next visit.')
             ->success()
@@ -219,7 +221,7 @@ class FreeAgentSettingsForm
     {
         Cache::flush(); // Simple implementation - in production might be more selective
 
-        \Filament\Notifications\Notification::make()
+        Notification::make()
             ->title('All Cache Cleared')
             ->body('All FreeAgent caches have been cleared system-wide.')
             ->success()

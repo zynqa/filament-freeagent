@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Filament\Resources;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
@@ -113,10 +114,10 @@ class FreeAgentInvoiceResource extends Resource
 
                 Tables\Filters\Filter::make('dated_on')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('from')
+                        DatePicker::make('from')
                             ->label('From Date')
                             ->displayFormat(config('app.date_format', 'd/m/Y')),
-                        \Filament\Forms\Components\DatePicker::make('to')
+                        DatePicker::make('to')
                             ->label('To Date')
                             ->displayFormat(config('app.date_format', 'd/m/Y')),
                     ])

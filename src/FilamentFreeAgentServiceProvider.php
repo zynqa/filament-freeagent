@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent;
 
+use App\Settings\GeneralSettings;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentService;
 
@@ -43,8 +45,8 @@ class FilamentFreeAgentServiceProvider extends PackageServiceProvider
             );
         });
 
-        $this->app->singleton(\Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService::class, function ($app) {
-            return new \Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService(
+        $this->app->singleton(FreeAgentCacheService::class, function ($app) {
+            return new FreeAgentCacheService(
                 $app->make(FreeAgentService::class)
             );
         });
@@ -56,8 +58,8 @@ class FilamentFreeAgentServiceProvider extends PackageServiceProvider
     protected function loadSettingsIntoConfig(): void
     {
         try {
-            if (class_exists(\App\Settings\GeneralSettings::class)) {
-                $settings = app(\App\Settings\GeneralSettings::class);
+            if (class_exists(GeneralSettings::class)) {
+                $settings = app(GeneralSettings::class);
 
                 // Override config with database settings if they exist
                 if ($settings->freeagent_client_id) {

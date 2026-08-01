@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Services;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
@@ -34,7 +35,7 @@ class FreeAgentService
     /**
      * Get all invoices, optionally filtered
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  array  $filters  Optional filters (contact, view, from_date, to_date)
      * @param  bool  $useCache  Whether to use cached results
      * @return array Array of invoice data
@@ -63,7 +64,7 @@ class FreeAgentService
     /**
      * Get a specific invoice by ID
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  string  $invoiceId  FreeAgent invoice ID (full URL)
      * @param  bool  $useCache  Whether to use cached results
      * @return array Invoice data
@@ -100,7 +101,7 @@ class FreeAgentService
     /**
      * Get PDF content for an invoice
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  string  $invoiceId  FreeAgent invoice ID
      * @return string PDF binary content
      *
@@ -156,7 +157,7 @@ class FreeAgentService
     /**
      * Get all contacts
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  array  $filters  Optional filters (view)
      * @param  bool  $useCache  Whether to use cached results
      * @return array Array of contact data
@@ -185,7 +186,7 @@ class FreeAgentService
     /**
      * Get a specific contact by ID
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  string  $contactId  FreeAgent contact ID (full URL)
      * @param  bool  $useCache  Whether to use cached results
      * @return array Contact data
@@ -221,7 +222,7 @@ class FreeAgentService
     /**
      * Get all projects
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  array  $filters  Optional filters (contact, view)
      * @param  bool  $useCache  Whether to use cached results
      * @return array Array of project data
@@ -250,7 +251,7 @@ class FreeAgentService
     /**
      * Get a specific project by ID
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  string  $projectId  FreeAgent project ID (full URL)
      * @param  bool  $useCache  Whether to use cached results
      * @return array Project data
@@ -288,7 +289,7 @@ class FreeAgentService
      *
      * @param  string  $method  HTTP method (GET, POST, etc.)
      * @param  string  $endpoint  API endpoint (without base URL)
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  array  $params  Query parameters or request body
      * @return array Response data
      *
@@ -373,7 +374,7 @@ class FreeAgentService
      * Fetch all pages from a paginated endpoint
      *
      * @param  string  $endpoint  API endpoint (invoices, contacts, etc.)
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  User for OAuth token
+     * @param  Authenticatable  $user  User for OAuth token
      * @param  array  $filters  Optional filters
      * @return array Combined results from all pages
      *
