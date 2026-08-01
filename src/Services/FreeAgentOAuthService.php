@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent\Services;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -86,7 +87,7 @@ class FreeAgentOAuthService
      * Handle OAuth callback and exchange code for tokens
      *
      * @param  string  $code  The authorization code from FreeAgent
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  The user to associate the token with
+     * @param  Authenticatable  $user  The user to associate the token with
      * @return FreeAgentOAuthToken The created or updated OAuth token
      *
      * @throws FreeAgentOAuthException
@@ -140,7 +141,7 @@ class FreeAgentOAuthService
     /**
      * Get a valid access token for the user, refreshing if necessary
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  Authenticatable  $user
      *
      * @throws FreeAgentOAuthException
      */
@@ -234,7 +235,7 @@ class FreeAgentOAuthService
     /**
      * Store OAuth tokens for system-wide use
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  (optional, for compatibility)
+     * @param  Authenticatable|null  $user  (optional, for compatibility)
      * @param  int  $expiresIn  Seconds until expiration
      */
     private function storeTokens($user, string $accessToken, string $refreshToken, int $expiresIn): FreeAgentOAuthToken
@@ -253,7 +254,7 @@ class FreeAgentOAuthService
     /**
      * Revoke and delete the system-wide OAuth token
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  (optional, for compatibility)
+     * @param  Authenticatable|null  $user  (optional, for compatibility)
      */
     public function revokeToken($user = null): void
     {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages;
 
 use Filament\Actions;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Log;
@@ -149,7 +150,7 @@ class ListFreeAgentInvoices extends ListRecords
                     ->title('Connection Required')
                     ->body('Please connect your FreeAgent account to sync invoices')
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('connect')
+                        Action::make('connect')
                             ->button()
                             ->url(route('freeagent.connect')),
                     ])
