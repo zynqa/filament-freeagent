@@ -89,7 +89,7 @@ class FreeAgentInvoiceResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'draft' => 'Draft',
+                        // Drafts are never synced to the portal, so they are not offered here.
                         'sent' => 'Sent',
                         'scheduled' => 'Scheduled',
                         'paid' => 'Paid',

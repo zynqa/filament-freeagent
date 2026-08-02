@@ -128,10 +128,19 @@ class ListFreeAgentInvoices extends ListRecords
             $stats = $cacheService->syncInvoices($user, $filters);
 
             if ($showNotification) {
+                $deleted = $stats['deleted'] ?? 0;
+                $skipped = $stats['skipped'] ?? 0;
+
+                $body = "Synced {$stats['total']} invoices ({$stats['created']} new, {$stats['updated']} updated, {$deleted} removed)";
+
+                if ($skipped > 0) {
+                    $body .= " — {$skipped} draft ".($skipped === 1 ? 'invoice' : 'invoices').' ignored';
+                }
+
                 Notification::make()
                     ->success()
                     ->title('FreeAgent Invoices Synced')
-                    ->body("Synced {$stats['total']} invoices ({$stats['created']} new, {$stats['updated']} updated)")
+                    ->body($body)
                     ->send();
             }
 

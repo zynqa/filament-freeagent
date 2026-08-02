@@ -208,14 +208,30 @@ class FreeAgentCacheService
             // Fetch all invoices from API (bypass cache)
             $apiInvoices = $this->freeAgentService->getInvoices($user, $filters, false);
 
+            // Drafts are not shown in the portal. They are dropped here rather than filtered in the
+            // resource so that an invoice reverted to draft in FreeAgent is pruned like a deletion.
+            $draftCount = count($apiInvoices);
+            $apiInvoices = $this->rejectDrafts($apiInvoices);
+            $draftCount -= count($apiInvoices);
+
             $stats = [
                 'total' => count($apiInvoices),
                 'created' => 0,
                 'updated' => 0,
+                'deleted' => 0,
+                'skipped' => $draftCount,
                 'errors' => 0,
             ];
 
+            $syncedIds = [];
+
             foreach ($apiInvoices as $apiInvoice) {
+                // Collected before the upsert so an invoice that exists in FreeAgent but fails
+                // to save locally is never treated as deleted.
+                if (isset($apiInvoice['url'])) {
+                    $syncedIds[] = $apiInvoice['url'];
+                }
+
                 try {
                     $invoice = FreeAgentInvoice::updateOrCreateFromApi($apiInvoice);
 
@@ -232,6 +248,9 @@ class FreeAgentCacheService
                     ]);
                 }
             }
+
+            // Remove invoices that have been deleted in FreeAgent
+            $stats['deleted'] = $this->pruneMissingInvoices($syncedIds, $filters);
 
             // Mark sync as completed
             $this->markInvoicesSynced($user->id);
@@ -254,6 +273,64 @@ class FreeAgentCacheService
 
             throw $e;
         }
+    }
+
+    /**
+     * Remove draft invoices from an API result set
+     *
+     * Drafts are working documents in FreeAgent and must not be visible to clients. Because they
+     * are dropped before the upsert, they are also absent from the synced ids, so a draft that was
+     * cached previously is removed by the prune below.
+     *
+     * @param  array  $apiInvoices  Invoices as returned by the API
+     * @return array Invoices excluding drafts
+     */
+    private function rejectDrafts(array $apiInvoices): array
+    {
+        $withoutDrafts = array_filter($apiInvoices, function (array $apiInvoice): bool {
+            return strtolower((string) ($apiInvoice['status'] ?? '')) !== 'draft';
+        });
+
+        return array_values($withoutDrafts);
+    }
+
+    /**
+     * Delete locally cached invoices that no longer exist in FreeAgent
+     *
+     * The API response is authoritative for the scope that was requested, so any local invoice
+     * inside that scope which was not returned has been deleted in FreeAgent.
+     *
+     * @param  array  $syncedIds  FreeAgent URLs of the invoices returned by the API
+     * @param  array  $filters  Filters the sync was performed with
+     * @return int Number of invoices deleted
+     */
+    private function pruneMissingInvoices(array $syncedIds, array $filters): int
+    {
+        // A view filter returns a partial set (for example only open invoices) that cannot be
+        // expressed as a local query, so pruning would delete invoices that still exist.
+        if (isset($filters['view'])) {
+            return 0;
+        }
+
+        $query = FreeAgentInvoice::query();
+
+        if (isset($filters['contact'])) {
+            $query->where('contact_freeagent_id', $filters['contact']);
+        }
+
+        if (isset($filters['from_date'])) {
+            $query->where('dated_on', '>=', $filters['from_date']);
+        }
+
+        if (isset($filters['to_date'])) {
+            $query->where('dated_on', '<=', $filters['to_date']);
+        }
+
+        if ($syncedIds !== []) {
+            $query->whereNotIn('freeagent_id', $syncedIds);
+        }
+
+        return $query->delete();
     }
 
     /**
