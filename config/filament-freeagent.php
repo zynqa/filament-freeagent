@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use Zynqa\FilamentFreeAgent\Settings\FreeAgentSettings;
 
 return [
     /*
@@ -37,10 +38,10 @@ return [
     | Can be set via Settings or environment variables
     | Settings take precedence over environment
     */
-    'client_id' => fn () => app(\Zynqa\FilamentFreeAgent\Settings\FreeAgentSettings::class)->client_id
+    'client_id' => fn () => app(FreeAgentSettings::class)->client_id
         ?? env('FREEAGENT_CLIENT_ID'),
 
-    'client_secret' => fn () => app(\Zynqa\FilamentFreeAgent\Settings\FreeAgentSettings::class)->client_secret
+    'client_secret' => fn () => app(FreeAgentSettings::class)->client_secret
         ?? env('FREEAGENT_CLIENT_SECRET'),
 
     'redirect_uri' => env('FREEAGENT_REDIRECT_URI', env('APP_URL').'/freeagent/callback'),

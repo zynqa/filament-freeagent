@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent\Services;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +85,7 @@ class FreeAgentCacheService
                     } else {
                         $stats['updated']++;
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $stats['errors']++;
                     Log::error('Failed to sync FreeAgent contact', [
                         'contact_url' => $apiContact['url'] ?? 'unknown',
@@ -154,7 +155,7 @@ class FreeAgentCacheService
                     } else {
                         $stats['updated']++;
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $stats['errors']++;
                     Log::error('Failed to sync FreeAgent project', [
                         'project_url' => $apiProject['url'] ?? 'unknown',
@@ -240,7 +241,7 @@ class FreeAgentCacheService
                     } else {
                         $stats['updated']++;
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $stats['errors']++;
                     Log::error('Failed to sync FreeAgent invoice', [
                         'invoice_url' => $apiInvoice['url'] ?? 'unknown',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent;
 
 use App\Settings\GeneralSettings;
+use Exception;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService;
@@ -80,7 +81,7 @@ class FilamentFreeAgentServiceProvider extends PackageServiceProvider
                     config(['filament-freeagent.token_url' => $settings->freeagent_oauth_url.'/v2/token_endpoint']);
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Silently fail if settings table doesn't exist yet (during migration)
             // Config will use default env() values
         }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages;
 
-use Filament\Actions;
-use Filament\Notifications\Actions\Action;
+use Exception;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +29,7 @@ class ListFreeAgentInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('sync')
+            Action::make('sync')
                 ->label('Sync Invoices')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
@@ -41,7 +41,7 @@ class ListFreeAgentInvoices extends ListRecords
                 ->modalDescription('This will fetch the latest invoice data from FreeAgent. This may take a few moments.')
                 ->modalSubmitActionLabel('Sync Now'),
 
-            Actions\Action::make('settings')
+            Action::make('settings')
                 ->label('FreeAgent Settings')
                 ->icon('heroicon-o-cog-6-tooth')
                 ->url(fn (): string => route('filament.app.pages.manage-general-settings').'?tab=-integrations-tab')
@@ -73,7 +73,7 @@ class ListFreeAgentInvoices extends ListRecords
             if ($cacheService->isInvoicesCacheStale($user->id)) {
                 $this->syncInvoices(false);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Silent fail - don't interrupt page load
             Log::warning('FreeAgent on-access sync check failed', [
                 'user_id' => $user->id,
@@ -178,7 +178,7 @@ class ListFreeAgentInvoices extends ListRecords
                     ->body('Unable to sync invoices from FreeAgent. Please try again later.')
                     ->send();
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Unexpected error during FreeAgent sync', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),

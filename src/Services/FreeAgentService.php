@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Services;
 
+use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
@@ -130,14 +131,14 @@ class FreeAgentService
 
                 // Extract base64-encoded PDF content
                 if (! isset($data['pdf']['content'])) {
-                    throw new \Exception('PDF content not found in FreeAgent response');
+                    throw new Exception('PDF content not found in FreeAgent response');
                 }
 
                 // Decode base64 to get actual PDF binary
                 $pdfContent = base64_decode($data['pdf']['content']);
 
                 if ($pdfContent === false) {
-                    throw new \Exception('Failed to decode PDF content');
+                    throw new Exception('Failed to decode PDF content');
                 }
 
                 return $pdfContent;

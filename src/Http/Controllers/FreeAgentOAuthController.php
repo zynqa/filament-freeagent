@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Http\Controllers;
 
+use Exception;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -175,7 +176,7 @@ class FreeAgentOAuthController extends Controller
 
             return redirect()->back();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('FreeAgent disconnect failed', [
                 'error' => $e->getMessage(),
                 'user_id' => auth()->id(),
@@ -214,7 +215,7 @@ class FreeAgentOAuthController extends Controller
 
             // Validate PDF content
             if (empty($pdfContent)) {
-                throw new \Exception('Empty PDF content received from FreeAgent');
+                throw new Exception('Empty PDF content received from FreeAgent');
             }
 
             // Verify it's actually a PDF (check magic bytes)
@@ -223,7 +224,7 @@ class FreeAgentOAuthController extends Controller
                     'invoice_id' => $invoice->id,
                     'content_start' => substr($pdfContent, 0, 100),
                 ]);
-                throw new \Exception('Invalid PDF content received from FreeAgent');
+                throw new Exception('Invalid PDF content received from FreeAgent');
             }
 
             // Generate filename
@@ -268,7 +269,7 @@ class FreeAgentOAuthController extends Controller
 
             return redirect()->back();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('FreeAgent PDF download unexpected error', [
                 'invoice_id' => $invoice->id,
                 'error' => $e->getMessage(),

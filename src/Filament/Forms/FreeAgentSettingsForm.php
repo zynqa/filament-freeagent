@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Filament\Forms;
 
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Section;
 use Illuminate\Support\Facades\Cache;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService;
@@ -26,17 +30,17 @@ class FreeAgentSettingsForm
     public static function getSchema(): array
     {
         return [
-            Forms\Components\Section::make('OAuth Configuration')
+            Section::make('OAuth Configuration')
                 ->description('Configure FreeAgent OAuth credentials for API access')
                 ->collapsible()
                 ->schema([
-                    Forms\Components\TextInput::make('client_id')
+                    TextInput::make('client_id')
                         ->label('Client ID')
                         ->helperText('Your FreeAgent OAuth application Client ID')
                         ->required()
                         ->maxLength(255),
 
-                    Forms\Components\TextInput::make('client_secret')
+                    TextInput::make('client_secret')
                         ->label('Client Secret')
                         ->helperText('Your FreeAgent OAuth application Client Secret')
                         ->password()
@@ -44,26 +48,26 @@ class FreeAgentSettingsForm
                         ->required()
                         ->maxLength(255),
 
-                    Forms\Components\Placeholder::make('redirect_uri')
+                    Placeholder::make('redirect_uri')
                         ->label('Redirect URI')
                         ->content(fn () => config('filament-freeagent.redirect_uri'))
                         ->helperText('Use this URL when configuring your FreeAgent OAuth application'),
                 ])
                 ->columns(2),
 
-            Forms\Components\Section::make('Connection Information')
+            Section::make('Connection Information')
                 ->description('Current FreeAgent connection details')
                 ->collapsible()
                 ->schema([
-                    Forms\Components\Placeholder::make('environment')
+                    Placeholder::make('environment')
                         ->label('Environment')
                         ->content(fn () => ucfirst(config('filament-freeagent.environment'))),
 
-                    Forms\Components\Placeholder::make('api_url')
+                    Placeholder::make('api_url')
                         ->label('API URL')
                         ->content(fn () => config('filament-freeagent.api_url')),
 
-                    Forms\Components\Placeholder::make('connection_status')
+                    Placeholder::make('connection_status')
                         ->label('Your Connection Status')
                         ->content(function () {
                             $user = auth()->user();
@@ -81,11 +85,11 @@ class FreeAgentSettingsForm
                 ])
                 ->columns(2),
 
-            Forms\Components\Section::make('User Connection')
+            Section::make('User Connection')
                 ->description('Connect your FreeAgent account to access invoices')
                 ->collapsible()
                 ->schema([
-                    Forms\Components\Placeholder::make('oauth_info')
+                    Placeholder::make('oauth_info')
                         ->label('OAuth Connection')
                         ->content(function () {
                             $user = auth()->user();
@@ -102,8 +106,8 @@ class FreeAgentSettingsForm
                         })
                         ->columnSpanFull(),
 
-                    Forms\Components\Actions::make([
-                        Forms\Components\Actions\Action::make('connect')
+                    Actions::make([
+                        Action::make('connect')
                             ->label('Connect FreeAgent')
                             ->icon('heroicon-o-link')
                             ->color('success')
@@ -114,7 +118,7 @@ class FreeAgentSettingsForm
                                 return ! (method_exists($user, 'hasFreeAgentConnection') && $user->hasFreeAgentConnection());
                             }),
 
-                        Forms\Components\Actions\Action::make('disconnect')
+                        Action::make('disconnect')
                             ->label('Disconnect FreeAgent')
                             ->icon('heroicon-o-x-mark')
                             ->color('danger')
@@ -142,11 +146,11 @@ class FreeAgentSettingsForm
                     ]),
                 ]),
 
-            Forms\Components\Section::make('Cache Management')
+            Section::make('Cache Management')
                 ->description('Clear FreeAgent caches to force fresh data from the API')
                 ->collapsible()
                 ->schema([
-                    Forms\Components\Placeholder::make('cache_info')
+                    Placeholder::make('cache_info')
                         ->label('Cache Status')
                         ->content(function () {
                             $user = auth()->user();
@@ -165,8 +169,8 @@ class FreeAgentSettingsForm
                         })
                         ->columnSpanFull(),
 
-                    Forms\Components\Actions::make([
-                        Forms\Components\Actions\Action::make('clear_my_cache')
+                    Actions::make([
+                        Action::make('clear_my_cache')
                             ->label('Clear My Cache')
                             ->icon('heroicon-o-trash')
                             ->color('warning')
@@ -177,7 +181,7 @@ class FreeAgentSettingsForm
                                 static::clearUserCache();
                             }),
 
-                        Forms\Components\Actions\Action::make('clear_all_cache')
+                        Action::make('clear_all_cache')
                             ->label('Clear All Users Cache')
                             ->icon('heroicon-o-trash')
                             ->color('danger')

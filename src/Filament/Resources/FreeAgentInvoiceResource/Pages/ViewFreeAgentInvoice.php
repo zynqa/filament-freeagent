@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages;
 
-use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
 use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource;
 
@@ -15,7 +15,7 @@ class ViewFreeAgentInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('download_pdf')
+            Action::make('download_pdf')
                 ->label('Download PDF')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('primary')
@@ -23,7 +23,7 @@ class ViewFreeAgentInvoice extends ViewRecord
                 ->openUrlInNewTab()
                 ->visible(fn (): bool => auth()->user()?->can('downloadPdf', $this->record) ?? false),
 
-            Actions\Action::make('back')
+            Action::make('back')
                 ->label('Back to List')
                 ->icon('heroicon-o-arrow-left')
                 ->url(fn (): string => FreeAgentInvoiceResource::getUrl('index'))

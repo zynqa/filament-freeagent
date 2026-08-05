@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Filament\Resources;
 
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages;
+use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages\ListFreeAgentInvoices;
+use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages\ViewFreeAgentInvoice;
 use Zynqa\FilamentFreeAgent\Models\FreeAgentInvoice;
 
 class FreeAgentInvoiceResource extends Resource
@@ -22,7 +29,7 @@ class FreeAgentInvoiceResource extends Resource
 
     protected static ?string $slug = 'invoices';
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $navigationLabel = 'Invoices';
 
@@ -38,13 +45,13 @@ class FreeAgentInvoiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('reference')
+                TextColumn::make('reference')
                     ->label('Reference')
                     ->searchable()
                     ->sortable()
                     ->copyable(),
 
-                Tables\Columns\TextColumn::make('contact.display_name')
+                TextColumn::make('contact.display_name')
                     ->label('Client & Project')
                     ->formatStateUsing(function (FreeAgentInvoice $record): string {
                         $client = $record->contact?->display_name ?? 'Unknown Client';
@@ -57,37 +64,37 @@ class FreeAgentInvoiceResource extends Resource
                     ->wrap()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (FreeAgentInvoice $record): string => $record->status_color)
                     ->formatStateUsing(fn (string $state, FreeAgentInvoice $record): string => $record->status_label)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('dated_on')
+                TextColumn::make('dated_on')
                     ->label('Invoice Date')
                     ->date(config('app.date_format', 'd/m/Y'))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('due_on')
+                TextColumn::make('due_on')
                     ->label('Due Date')
                     ->date(config('app.date_format', 'd/m/Y'))
                     ->sortable()
                     ->color(fn (FreeAgentInvoice $record): string => $record->isOverdue() ? 'danger' : 'gray'),
 
-                Tables\Columns\TextColumn::make('total_value')
+                TextColumn::make('total_value')
                     ->label('Total')
                     ->money(fn (FreeAgentInvoice $record): string => $record->currency)
                     ->sortable()
                     ->alignEnd(),
 
-                Tables\Columns\IconColumn::make('is_overdue')
+                IconColumn::make('is_overdue')
                     ->label('Overdue')
                     ->boolean()
                     ->getStateUsing(fn (FreeAgentInvoice $record): bool => $record->isOverdue())
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options([
                         // Drafts are never synced to the portal, so they are not offered here.
                         'sent' => 'Sent',
@@ -98,22 +105,22 @@ class FreeAgentInvoiceResource extends Resource
                     ])
                     ->multiple(),
 
-                Tables\Filters\SelectFilter::make('contact_id')
+                SelectFilter::make('contact_id')
                     ->label('Contact')
                     ->relationship('contact', 'organisation_name')
                     ->preload()
                     ->searchable(),
 
-                Tables\Filters\Filter::make('overdue')
+                Filter::make('overdue')
                     ->label('Overdue Only')
                     ->query(fn (Builder $query): Builder => $query->overdue()),
 
-                Tables\Filters\Filter::make('unpaid')
+                Filter::make('unpaid')
                     ->label('Unpaid Only')
                     ->query(fn (Builder $query): Builder => $query->unpaid()),
 
-                Tables\Filters\Filter::make('dated_on')
-                    ->form([
+                Filter::make('dated_on')
+                    ->schema([
                         DatePicker::make('from')
                             ->label('From Date')
                             ->displayFormat(config('app.date_format', 'd/m/Y')),
@@ -133,9 +140,9 @@ class FreeAgentInvoiceResource extends Resource
                             );
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('download_pdf')
+            ->recordActions([
+                ViewAction::make(),
+                Action::make('download_pdf')
                     ->label('Download PDF')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('primary')
@@ -143,7 +150,7 @@ class FreeAgentInvoiceResource extends Resource
                     ->openUrlInNewTab()
                     ->visible(fn (FreeAgentInvoice $record): bool => Auth::user()?->can('downloadPdf', $record) ?? false),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // No bulk actions for read-only resource
             ])
             ->defaultSort('dated_on', 'desc')
@@ -153,77 +160,77 @@ class FreeAgentInvoiceResource extends Resource
             ->emptyStateIcon('heroicon-o-document-text');
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
-                Infolists\Components\Section::make('Invoice Details')
+        return $schema
+            ->components([
+                Section::make('Invoice Details')
                     ->schema([
-                        Infolists\Components\TextEntry::make('reference')
+                        TextEntry::make('reference')
                             ->label('Invoice Reference')
                             ->copyable(),
 
-                        Infolists\Components\TextEntry::make('status')
+                        TextEntry::make('status')
                             ->badge()
                             ->color(fn (FreeAgentInvoice $record): string => $record->status_color)
                             ->formatStateUsing(fn (string $state, FreeAgentInvoice $record): string => $record->status_label),
 
-                        Infolists\Components\TextEntry::make('project.name')
+                        TextEntry::make('project.name')
                             ->label('Project')
                             ->default('No Project Assigned')
                             ->icon('heroicon-o-briefcase'),
 
-                        Infolists\Components\TextEntry::make('dated_on')
+                        TextEntry::make('dated_on')
                             ->label('Invoice Date')
                             ->date(config('app.date_format', 'd/m/Y')),
 
-                        Infolists\Components\TextEntry::make('due_on')
+                        TextEntry::make('due_on')
                             ->label('Due Date')
                             ->date(config('app.date_format', 'd/m/Y'))
                             ->color(fn (FreeAgentInvoice $record): string => $record->isOverdue() ? 'danger' : 'gray'),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Contact Information')
+                Section::make('Contact Information')
                     ->schema([
-                        Infolists\Components\TextEntry::make('contact.display_name')
+                        TextEntry::make('contact.display_name')
                             ->label('Contact Name'),
 
-                        Infolists\Components\TextEntry::make('contact.email')
+                        TextEntry::make('contact.email')
                             ->label('Email')
                             ->copyable(),
 
-                        Infolists\Components\TextEntry::make('contact.phone_number')
+                        TextEntry::make('contact.phone_number')
                             ->label('Phone')
                             ->copyable(),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Financial Details')
+                Section::make('Financial Details')
                     ->schema([
-                        Infolists\Components\TextEntry::make('net_value')
+                        TextEntry::make('net_value')
                             ->label('Net Amount')
                             ->money(fn (FreeAgentInvoice $record): string => $record->currency),
 
-                        Infolists\Components\TextEntry::make('sales_tax_value')
+                        TextEntry::make('sales_tax_value')
                             ->label('VAT/Tax')
                             ->money(fn (FreeAgentInvoice $record): string => $record->currency),
 
-                        Infolists\Components\TextEntry::make('total_value')
+                        TextEntry::make('total_value')
                             ->label('Total Amount')
                             ->money(fn (FreeAgentInvoice $record): string => $record->currency)
                             ->weight('bold')
                             ->size('lg'),
 
-                        Infolists\Components\TextEntry::make('currency')
+                        TextEntry::make('currency')
                             ->label('Currency')
                             ->badge(),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Sync Information')
+                Section::make('Sync Information')
                     ->schema([
-                        Infolists\Components\TextEntry::make('synced_at')
+                        TextEntry::make('synced_at')
                             ->label('Last Synced')
                             ->dateTime(config('app.date_format', 'd/m/Y').' H:i:s')
                             ->since(),
@@ -235,8 +242,8 @@ class FreeAgentInvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFreeAgentInvoices::route('/'),
-            'view' => Pages\ViewFreeAgentInvoice::route('/{record}'),
+            'index' => ListFreeAgentInvoices::route('/'),
+            'view' => ViewFreeAgentInvoice::route('/{record}'),
         ];
     }
 
