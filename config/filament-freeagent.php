@@ -1,9 +1,29 @@
 <?php
 
 declare(strict_types=1);
-use Zynqa\FilamentFreeAgent\Settings\FreeAgentSettings;
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Register the bundled Invoice resource
+    |--------------------------------------------------------------------------
+    | Set to false if the host app surfaces FreeAgent invoices through its own
+    | invoice screen and does not want this package's invoice resource (and its
+    | navigation entry) registered, avoiding a duplicate UI.
+    */
+    'register_invoice_resource' => env('FREEAGENT_REGISTER_INVOICE_RESOURCE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invoice resource slug
+    |--------------------------------------------------------------------------
+    | The URL segment the bundled Invoice resource is served from. This is a
+    | user-facing URL, so it deliberately does not name the upstream provider —
+    | FreeAgent is an implementation detail, not something clients should see.
+    | Override it only if the host app already owns /invoices.
+    */
+    'invoice_resource_slug' => env('FREEAGENT_INVOICE_RESOURCE_SLUG', 'invoices'),
+
     /*
     |--------------------------------------------------------------------------
     | FreeAgent Environment
@@ -35,16 +55,29 @@ return [
     |--------------------------------------------------------------------------
     | OAuth Credentials
     |--------------------------------------------------------------------------
-    | Can be set via Settings or environment variables
-    | Settings take precedence over environment
+    | Resolved from environment by default. The host application may override
+    | these at runtime from its own settings store (see the service provider's
+    | loadSettingsIntoConfig()), which takes precedence over these env values.
     */
-    'client_id' => fn () => app(FreeAgentSettings::class)->client_id
-        ?? env('FREEAGENT_CLIENT_ID'),
+    'client_id' => env('FREEAGENT_CLIENT_ID'),
 
-    'client_secret' => fn () => app(FreeAgentSettings::class)->client_secret
-        ?? env('FREEAGENT_CLIENT_SECRET'),
+    'client_secret' => env('FREEAGENT_CLIENT_SECRET'),
 
     'redirect_uri' => env('FREEAGENT_REDIRECT_URI', env('APP_URL').'/freeagent/callback'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Panel Redirect Routes
+    |--------------------------------------------------------------------------
+    | The OAuth controller redirects here after connect/disconnect/error.
+    | Defaults assume a Filament panel with id "app"; override these for a
+    | panel registered under a different id (e.g. "auth" => filament.auth.*).
+    */
+    'routes' => [
+        'login' => env('FREEAGENT_LOGIN_ROUTE', 'filament.app.auth.login'),
+        'dashboard' => env('FREEAGENT_DASHBOARD_ROUTE', 'filament.app.pages.dashboard'),
+        'settings' => env('FREEAGENT_SETTINGS_ROUTE', 'filament.app.pages.manage-general-settings'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent;
 
 use App\Settings\GeneralSettings;
-use Exception;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService;
@@ -59,29 +58,62 @@ class FilamentFreeAgentServiceProvider extends PackageServiceProvider
     protected function loadSettingsIntoConfig(): void
     {
         try {
-            if (class_exists(GeneralSettings::class)) {
-                $settings = app(GeneralSettings::class);
-
-                // Override config with database settings if they exist
-                if ($settings->freeagent_client_id) {
-                    config(['filament-freeagent.client_id' => $settings->freeagent_client_id]);
-                }
-
-                if ($settings->freeagent_client_secret) {
-                    config(['filament-freeagent.client_secret' => $settings->freeagent_client_secret]);
-                }
-
-                if ($settings->freeagent_api_url) {
-                    config(['filament-freeagent.api_url' => $settings->freeagent_api_url]);
-                }
-
-                if ($settings->freeagent_oauth_url) {
-                    config(['filament-freeagent.oauth_url' => $settings->freeagent_oauth_url]);
-                    config(['filament-freeagent.authorize_url' => $settings->freeagent_oauth_url.'/v2/approve_app']);
-                    config(['filament-freeagent.token_url' => $settings->freeagent_oauth_url.'/v2/token_endpoint']);
-                }
+            if (! class_exists(GeneralSettings::class)) {
+                return;
             }
-        } catch (Exception $e) {
+
+            $settings = app(GeneralSettings::class);
+
+            // Read a property only if the host's settings class actually defines
+            // it — different host apps expose different FreeAgent settings.
+            $get = function (string $property) use ($settings) {
+                return property_exists($settings, $property) ? $settings->{$property} : null;
+            };
+
+            // Host's master enable toggle (used to gate the package's UI).
+            $enabled = $get('freeagent_enabled');
+            if ($enabled !== null) {
+                config(['filament-freeagent.enabled' => (bool) $enabled]);
+            }
+
+            if ($clientId = $get('freeagent_client_id')) {
+                config(['filament-freeagent.client_id' => $clientId]);
+            }
+
+            if ($clientSecret = $get('freeagent_client_secret')) {
+                config(['filament-freeagent.client_secret' => $clientSecret]);
+            }
+
+            if ($redirectUri = $get('freeagent_redirect_uri')) {
+                config(['filament-freeagent.redirect_uri' => $redirectUri]);
+            }
+
+            // Preferred: a simple 'sandbox' | 'production' environment toggle that
+            // derives all three API/OAuth URLs.
+            if ($env = $get('freeagent_env')) {
+                $base = $env === 'production'
+                    ? 'https://api.freeagent.com/v2'
+                    : 'https://api.sandbox.freeagent.com/v2';
+
+                config([
+                    'filament-freeagent.environment' => $env,
+                    'filament-freeagent.api_url' => $base,
+                    'filament-freeagent.authorize_url' => $base.'/approve_app',
+                    'filament-freeagent.token_url' => $base.'/token_endpoint',
+                ]);
+            }
+
+            // Backward-compatible: explicit URL overrides (legacy host settings).
+            if ($apiUrl = $get('freeagent_api_url')) {
+                config(['filament-freeagent.api_url' => $apiUrl]);
+            }
+
+            if ($oauthUrl = $get('freeagent_oauth_url')) {
+                config(['filament-freeagent.oauth_url' => $oauthUrl]);
+                config(['filament-freeagent.authorize_url' => $oauthUrl.'/v2/approve_app']);
+                config(['filament-freeagent.token_url' => $oauthUrl.'/v2/token_endpoint']);
+            }
+        } catch (\Exception $e) {
             // Silently fail if settings table doesn't exist yet (during migration)
             // Config will use default env() values
         }

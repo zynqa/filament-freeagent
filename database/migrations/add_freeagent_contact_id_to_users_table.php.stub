@@ -10,8 +10,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'freeagent_contact_id')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            $table->string('freeagent_contact_id')->nullable()->after('tempo_accounts');
+            $table->string('freeagent_contact_id')->nullable();
             $table->index('freeagent_contact_id');
         });
     }

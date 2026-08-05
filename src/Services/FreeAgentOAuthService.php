@@ -145,10 +145,18 @@ class FreeAgentOAuthService
      *
      * @throws FreeAgentOAuthException
      */
+    /**
+     * Whether an app-wide FreeAgent connection (system token) exists.
+     */
+    public function hasConnection(): bool
+    {
+        return FreeAgentOAuthToken::system()->exists();
+    }
+
     public function getValidAccessToken($user = null): ?FreeAgentOAuthToken
     {
-        // Use system-wide connection (user_id = 1) instead of per-user tokens
-        $token = FreeAgentOAuthToken::forUser(1)
+        // Use the app-wide ("system") connection rather than per-user tokens.
+        $token = FreeAgentOAuthToken::system()
             ->latest()
             ->first();
 
@@ -240,11 +248,11 @@ class FreeAgentOAuthService
      */
     private function storeTokens($user, string $accessToken, string $refreshToken, int $expiresIn): FreeAgentOAuthToken
     {
-        // Delete any existing system tokens (user_id = 1 for app-wide connection)
-        FreeAgentOAuthToken::where('user_id', 1)->delete();
+        // Replace any existing app-wide (system) token.
+        FreeAgentOAuthToken::system()->delete();
 
         return FreeAgentOAuthToken::create([
-            'user_id' => 1, // System-wide connection
+            'user_id' => null, // App-wide ("system") connection
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'expires_at' => Carbon::now()->addSeconds($expiresIn),
@@ -258,7 +266,7 @@ class FreeAgentOAuthService
      */
     public function revokeToken($user = null): void
     {
-        FreeAgentOAuthToken::where('user_id', 1)->delete();
+        FreeAgentOAuthToken::system()->delete();
 
         Log::info('FreeAgent OAuth token revoked', [
             'system_token' => true,

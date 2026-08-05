@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Filament\Resources;
 
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Panel;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -19,17 +22,28 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages\ListFreeAgentInvoices;
-use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages\ViewFreeAgentInvoice;
+use Zynqa\FilamentFreeAgent\Filament\Resources\FreeAgentInvoiceResource\Pages;
 use Zynqa\FilamentFreeAgent\Models\FreeAgentInvoice;
+use Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService;
 
 class FreeAgentInvoiceResource extends Resource
 {
     protected static ?string $model = FreeAgentInvoice::class;
 
-    protected static ?string $slug = 'invoices';
+    /**
+     * Served from /invoices, deliberately: the URL is user-facing and must not name the
+     * upstream provider. FreeAgent is an implementation detail of where the data comes
+     * from, not something clients should see in their address bar.
+     *
+     * Configurable only so a host app that already owns /invoices can move this one out
+     * of the way; it should still not be given a freeagent-prefixed path in that case.
+     */
+    public static function getSlug(?Panel $panel = null): string
+    {
+        return config('filament-freeagent.invoice_resource_slug', 'invoices');
+    }
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
     protected static ?string $navigationLabel = 'Invoices';
 
@@ -37,7 +51,7 @@ class FreeAgentInvoiceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Invoices';
 
-    //    protected static ?string $navigationGroup = 'Finance';
+    //    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
 
     protected static ?int $navigationSort = 10;
 
@@ -96,7 +110,7 @@ class FreeAgentInvoiceResource extends Resource
             ->filters([
                 SelectFilter::make('status')
                     ->options([
-                        // Drafts are never synced to the portal, so they are not offered here.
+                        'draft' => 'Draft',
                         'sent' => 'Sent',
                         'scheduled' => 'Scheduled',
                         'paid' => 'Paid',
@@ -163,7 +177,7 @@ class FreeAgentInvoiceResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema
-            ->components([
+            ->schema([
                 Section::make('Invoice Details')
                     ->schema([
                         TextEntry::make('reference')
@@ -242,8 +256,8 @@ class FreeAgentInvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListFreeAgentInvoices::route('/'),
-            'view' => ViewFreeAgentInvoice::route('/{record}'),
+            'index' => Pages\ListFreeAgentInvoices::route('/'),
+            'view' => Pages\ViewFreeAgentInvoice::route('/{record}'),
         ];
     }
 
@@ -282,6 +296,16 @@ class FreeAgentInvoiceResource extends Resource
         $user = Auth::user();
 
         if (! $user) {
+            return false;
+        }
+
+        // Hide entirely unless the integration is active (enabled by the host
+        // and a live OAuth connection exists), so it doesn't sit alongside a
+        // host's own invoice screen when FreeAgent is off.
+        $enabled = config('filament-freeagent.enabled', true);
+        $connected = app(FreeAgentOAuthService::class)->hasConnection();
+
+        if (! $enabled || ! $connected) {
             return false;
         }
 

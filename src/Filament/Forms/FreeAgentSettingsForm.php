@@ -10,7 +10,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
-use Illuminate\Support\Facades\Cache;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentCacheService;
 use Zynqa\FilamentFreeAgent\Services\FreeAgentOAuthService;
 
@@ -180,18 +179,6 @@ class FreeAgentSettingsForm
                             ->action(function () {
                                 static::clearUserCache();
                             }),
-
-                        Action::make('clear_all_cache')
-                            ->label('Clear All Users Cache')
-                            ->icon('heroicon-o-trash')
-                            ->color('danger')
-                            ->visible(fn () => auth()->user()?->hasRole('super_admin'))
-                            ->requiresConfirmation()
-                            ->modalHeading('Clear All FreeAgent Cache')
-                            ->modalDescription('This will clear the FreeAgent cache for ALL users. This is a system-wide operation.')
-                            ->action(function () {
-                                static::clearAllCache();
-                            }),
                     ]),
                 ]),
         ];
@@ -214,20 +201,6 @@ class FreeAgentSettingsForm
         Notification::make()
             ->title('Cache Cleared Successfully')
             ->body('Your FreeAgent cache has been cleared. Fresh data will be loaded on your next visit.')
-            ->success()
-            ->send();
-    }
-
-    /**
-     * Clear all FreeAgent caches for all users (admin only)
-     */
-    protected static function clearAllCache(): void
-    {
-        Cache::flush(); // Simple implementation - in production might be more selective
-
-        Notification::make()
-            ->title('All Cache Cleared')
-            ->body('All FreeAgent caches have been cleared system-wide.')
             ->success()
             ->send();
     }
