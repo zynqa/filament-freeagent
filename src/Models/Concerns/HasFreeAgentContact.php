@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zynqa\FilamentFreeAgent\Models\Concerns;
 
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Zynqa\FilamentFreeAgent\Models\FreeAgentContact;
 use Zynqa\FilamentFreeAgent\Models\FreeAgentOAuthToken;
 
@@ -20,10 +20,18 @@ trait HasFreeAgentContact
 {
     /**
      * The FreeAgent contact linked to this record.
+     *
+     * belongsTo, not hasOne: this record holds freeagent_contact_id pointing at
+     * freeagent_contacts.id, so it owns the key. The relationship was previously declared
+     * as hasOne(FreeAgentContact::class, 'id', 'freeagent_contact_id'), which reads
+     * identically but is the wrong way round for writes — and Filament's
+     * Select::relationship() writes. Saving a user with a contact linked made Filament
+     * push the key onto the *contact*, producing
+     * `update freeagent_contacts set id = null where id = 3` and an integrity violation.
      */
-    public function freeAgentContact(): HasOne
+    public function freeAgentContact(): BelongsTo
     {
-        return $this->hasOne(FreeAgentContact::class, 'id', 'freeagent_contact_id');
+        return $this->belongsTo(FreeAgentContact::class, 'freeagent_contact_id', 'id');
     }
 
     /**
