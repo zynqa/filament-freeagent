@@ -283,9 +283,16 @@ class FreeAgentOAuthController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
+            // The accounting integration is authorised once for the whole installation, by
+            // an administrator. Telling a client to "connect your account" names a third
+            // party they have no relationship with and asks for something they cannot do.
+            $isAdmin = auth()->user()?->hasRole('super_admin') ?? false;
+
             Notification::make()
-                ->title('Connection Required')
-                ->body('Please connect your FreeAgent account to download invoices')
+                ->title($isAdmin ? 'Connection Required' : 'Download Unavailable')
+                ->body($isAdmin
+                    ? 'Reconnect the accounting integration to download invoices.'
+                    : 'This invoice cannot be downloaded right now. Please contact your administrator.')
                 ->danger()
                 ->send();
 

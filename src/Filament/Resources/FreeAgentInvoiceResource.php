@@ -170,7 +170,7 @@ class FreeAgentInvoiceResource extends Resource
             ->defaultSort('dated_on', 'desc')
             ->poll('60s') // Auto-refresh every 60 seconds
             ->emptyStateHeading('No Invoices Available')
-            ->emptyStateDescription('Your account is not yet linked to a FreeAgent contact. Please contact your administrator to set up access.')
+            ->emptyStateDescription('Your account is not set up for invoices yet. Please contact your administrator.')
             ->emptyStateIcon('heroicon-o-document-text');
     }
 

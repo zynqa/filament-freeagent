@@ -37,8 +37,8 @@ class ListFreeAgentInvoices extends ListRecords
                     $this->syncInvoices(true);
                 })
                 ->requiresConfirmation()
-                ->modalHeading('Sync FreeAgent Invoices')
-                ->modalDescription('This will fetch the latest invoice data from FreeAgent. This may take a few moments.')
+                ->modalHeading('Sync Invoices')
+                ->modalDescription('This will fetch the latest invoice data. This may take a few moments.')
                 ->modalSubmitActionLabel('Sync Now'),
 
             Action::make('settings')
@@ -128,7 +128,7 @@ class ListFreeAgentInvoices extends ListRecords
                         if ($showNotification) {
                             Notification::make()
                                 ->title('Setup Required')
-                                ->body('Please contact your administrator to link your account to a FreeAgent contact.')
+                                ->body('Your account is not set up for invoices yet. Please contact your administrator.')
                                 ->warning()
                                 ->send();
                         }
@@ -146,7 +146,7 @@ class ListFreeAgentInvoices extends ListRecords
             if ($showNotification) {
                 Notification::make()
                     ->success()
-                    ->title('FreeAgent Invoices Synced')
+                    ->title('Invoices Synced')
                     ->body("Synced {$stats['total']} invoices ({$stats['created']} new, {$stats['updated']} updated)")
                     ->send();
             }
@@ -161,16 +161,28 @@ class ListFreeAgentInvoices extends ListRecords
             ]);
 
             if ($showNotification) {
-                Notification::make()
+                // Only an administrator can authorise the accounting integration, and only
+                // an administrator should be told that is what is missing. A client gets a
+                // message they can act on — and no button into an OAuth flow that would
+                // fail for them.
+                $isAdmin = auth()->user()?->hasRole('super_admin') ?? false;
+
+                $notification = Notification::make()
                     ->danger()
-                    ->title('Connection Required')
-                    ->body('Please connect your FreeAgent account to sync invoices')
-                    ->actions([
+                    ->title($isAdmin ? 'Connection Required' : 'Invoices Unavailable')
+                    ->body($isAdmin
+                        ? 'Connect the accounting integration to sync invoices.'
+                        : 'Invoices are temporarily unavailable. Please contact your administrator.');
+
+                if ($isAdmin) {
+                    $notification->actions([
                         Action::make('connect')
                             ->button()
                             ->url(route('freeagent.connect')),
-                    ])
-                    ->send();
+                    ]);
+                }
+
+                $notification->send();
             }
         } catch (FreeAgentApiException $e) {
             Log::error('FreeAgent API error during sync', [
@@ -182,7 +194,7 @@ class ListFreeAgentInvoices extends ListRecords
                 Notification::make()
                     ->danger()
                     ->title('Sync Failed')
-                    ->body('Unable to sync invoices from FreeAgent. Please try again later.')
+                    ->body('Unable to sync invoices. Please try again later.')
                     ->send();
             }
         } catch (\Exception $e) {
