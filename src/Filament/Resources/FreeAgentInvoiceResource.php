@@ -177,7 +177,12 @@ class FreeAgentInvoiceResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema
-            ->schema([
+            // One column, explicitly. Filament 4 changed a view page's default schema to a
+            // two-column grid, so these four sections sat in a 2x2 arrangement where they
+            // had always stacked. Each section sets its own internal column count; this
+            // only affects how the sections themselves are laid out.
+            ->columns(1)
+            ->components([
                 Section::make('Invoice Details')
                     ->schema([
                         TextEntry::make('reference')
