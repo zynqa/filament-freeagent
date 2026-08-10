@@ -221,6 +221,52 @@ class FreeAgentService
     }
 
     /**
+     * Create a contact in FreeAgent.
+     *
+     * @param  Authenticatable  $user  User for OAuth token
+     * @param  array  $contact  Contact payload (the inner "contact" object), e.g.
+     *                          ['organisation_name' => '1 Alpha Street', 'first_name' => 'Greg',
+     *                          'last_name' => 'Richardson', 'email' => 'greg@example.com']
+     * @return array The created contact data
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function createContact($user, array $contact): array
+    {
+        $response = $this->sendRequest('POST', 'contacts', $user, ['contact' => $contact]);
+
+        $this->clearUserCache($user->id);
+
+        return $response['contact'] ?? [];
+    }
+
+    /**
+     * Update an existing contact in FreeAgent.
+     *
+     * Only the keys supplied are changed; FreeAgent leaves the rest of the record
+     * alone. Note the local freeagent_contacts mirror is refreshed from the API,
+     * not from this payload, so a caller that wants the local copy to agree
+     * immediately should re-sync rather than assume.
+     *
+     * @param  Authenticatable  $user  User for OAuth token
+     * @param  string  $contactId  FreeAgent contact ID (numeric or full URL)
+     * @param  array  $contact  Contact fields to update (the inner "contact" object)
+     * @return array The updated contact data
+     *
+     * @throws FreeAgentApiException|FreeAgentOAuthException
+     */
+    public function updateContact($user, string $contactId, array $contact): array
+    {
+        $id = $this->extractIdFromUrl($contactId);
+
+        $response = $this->sendRequest('PUT', "contacts/{$id}", $user, ['contact' => $contact]);
+
+        $this->clearUserCache($user->id);
+
+        return $response['contact'] ?? [];
+    }
+
+    /**
      * Get all projects
      *
      * @param  Authenticatable  $user  User for OAuth token
