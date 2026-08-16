@@ -186,6 +186,42 @@ class FreeAgentOAuthService
     }
 
     /**
+     * Refresh the system token regardless of what its recorded expiry claims.
+     *
+     * getValidAccessToken() refreshes only inside a five minute window before expires_at,
+     * which is sound while that timestamp is trustworthy and useless when it is not. A
+     * token recorded as valid for days but rejected by FreeAgent within the hour left the
+     * portal returning 401 on every call until an admin reconnected by hand.
+     *
+     * So this exists for the caller that has just been told, by FreeAgent itself, that the
+     * token is no good. Returns null rather than throwing: the caller already has a failed
+     * request to report, and a refresh that cannot succeed should not replace that error
+     * with a less specific one.
+     *
+     * Unlike getValidAccessToken(), a failure here does not delete the token. Deleting it
+     * hides the invoices section altogether, which reads as a second unrelated fault; an
+     * admin should see the sync fail and reconnect deliberately.
+     */
+    public function forceRefreshSystemToken(): ?FreeAgentOAuthToken
+    {
+        $token = FreeAgentOAuthToken::system()->latest()->first();
+
+        if (! $token) {
+            return null;
+        }
+
+        try {
+            return $this->refreshAccessToken($token);
+        } catch (FreeAgentOAuthException $e) {
+            Log::warning('FreeAgent token refresh after 401 failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Refresh an expired or expiring access token
      *
      * @param  FreeAgentOAuthToken  $token  The token to refresh

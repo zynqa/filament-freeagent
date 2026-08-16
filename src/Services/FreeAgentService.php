@@ -18,6 +18,9 @@ use Zynqa\FilamentFreeAgent\Exceptions\FreeAgentOAuthException;
 
 class FreeAgentService
 {
+    /** FreeAgent's response when the access token is expired or revoked. */
+    private const HTTP_UNAUTHORIZED = 401;
+
     private readonly string $apiUrl;
 
     private readonly int $invoicesCacheTtl;
@@ -451,7 +454,7 @@ class FreeAgentService
      *
      * @throws FreeAgentApiException|FreeAgentOAuthException
      */
-    private function sendRequest(string $method, string $endpoint, $user, array $params = []): array
+    private function sendRequest(string $method, string $endpoint, $user, array $params = [], bool $isRetryAfterRefresh = false): array
     {
         $startTime = microtime(true);
 
@@ -487,6 +490,22 @@ class FreeAgentService
         } catch (RequestException $e) {
             $duration = (microtime(true) - $startTime) * 1000;
             $statusCode = $e->response?->status() ?? 0;
+
+            // FreeAgent has just said the credential is no good, and that outranks whatever
+            // expires_at claims. Refresh once and repeat the request. Without this, a token
+            // recorded as valid but rejected in practice fails every call until somebody
+            // reconnects by hand — which is how invoice syncing came to be broken for days
+            // at a time with nothing but a generic "try again later" to show for it.
+            //
+            // Once only: a genuinely revoked connection should surface its error rather
+            // than send both APIs into a refresh loop.
+            if ($statusCode === self::HTTP_UNAUTHORIZED && ! $isRetryAfterRefresh) {
+                $this->logApiRequest($method, $endpoint, $duration, $statusCode, false, 'Token rejected by FreeAgent; refreshing and retrying once');
+
+                if ($this->oauthService->forceRefreshSystemToken() !== null) {
+                    return $this->sendRequest($method, $endpoint, $user, $params, true);
+                }
+            }
 
             $this->logApiRequest($method, $endpoint, $duration, $statusCode, false, $e->getMessage());
 
