@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Zynqa\FilamentFreeAgent\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @method static Builder<static> system() The app-wide connection's tokens (no user), see scopeSystem().
+ */
 class FreeAgentOAuthToken extends Model
 {
     protected $table = 'freeagent_oauth_tokens';
