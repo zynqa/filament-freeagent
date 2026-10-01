@@ -655,6 +655,14 @@ class FreeAgentService
             $params['to_date'] = $filters['to_date'];
         }
 
+        if (isset($filters['project'])) {
+            $params['project'] = $filters['project'];
+        }
+
+        if (isset($filters['nested_invoice_items'])) {
+            $params['nested_invoice_items'] = $filters['nested_invoice_items'];
+        }
+
         return $params;
     }
 
