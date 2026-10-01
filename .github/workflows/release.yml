@@ -44,22 +44,34 @@ jobs:
       - name: Compute next version
         id: version
         run: |
-          latest=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+          # Releases are tagged vX.Y.Z, and the repo also carries older unprefixed
+          # X.Y.Z tags. Compare both kinds by version number, ignoring the prefix,
+          # so a stray old tag can never be picked over the real latest release.
+          latest=$(git tag --list \
+            | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' \
+            | awk '{ version = $0; sub(/^v/, "", version); print version, $0 }' \
+            | sort -t. -k1,1n -k2,2n -k3,3n \
+            | tail -n 1 \
+            | cut -d' ' -f2 || true)
           if [ -z "$latest" ]; then
-            previous='0.0.0'
+            previous='v0.0.0'
             has_previous='false'
           else
             previous="$latest"
             has_previous='true'
           fi
 
-          IFS='.' read -r major minor patch <<< "$previous"
+          # Keep the latest tag's prefix, so v3.3.0 is followed by v3.3.1.
+          prefix=''
+          case "$previous" in v*) prefix='v' ;; esac
+
+          IFS='.' read -r major minor patch <<< "${previous#v}"
           case "${{ steps.bump.outputs.type }}" in
             major) major=$((major + 1)); minor=0; patch=0 ;;
             minor) minor=$((minor + 1)); patch=0 ;;
             patch) patch=$((patch + 1)) ;;
           esac
-          next="${major}.${minor}.${patch}"
+          next="${prefix}${major}.${minor}.${patch}"
 
           echo "previous=${previous}" >> "$GITHUB_OUTPUT"
           echo "has_previous=${has_previous}" >> "$GITHUB_OUTPUT"
